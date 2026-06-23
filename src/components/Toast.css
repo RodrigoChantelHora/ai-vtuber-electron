@@ -1,0 +1,19 @@
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(30, 30, 50, 0.95);
+  border: 1px solid #2a2a4a;
+  border-radius: 8px;
+  padding: 10px 20px;
+  color: #e0e0e8;
+  font-size: 13px;
+  z-index: 200;
+  backdrop-filter: blur(8px);
+  transition: opacity 0.3s, transform 0.3s;
+  white-space: nowrap;
+}
+
+.toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.hidden { opacity: 0; transform: translateX(-50%) translateY(10px); }

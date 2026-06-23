@@ -1,0 +1,44 @@
+.title-bar {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  background: #0e0e16;
+  user-select: none;
+  -webkit-app-region: drag;
+}
+
+.title-bar-drag {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding-left: 12px;
+}
+
+.title-logo {
+  font-size: 13px;
+  font-weight: 600;
+  color: #aaa;
+  letter-spacing: 1px;
+}
+
+.title-bar-controls {
+  display: flex;
+  -webkit-app-region: no-drag;
+}
+
+.tb-btn {
+  width: 40px;
+  height: 36px;
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.tb-btn:hover { background: #2a2a3a; color: #fff; }
+.tb-close:hover { background: #cc3333; color: #fff; }

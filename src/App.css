@@ -1,0 +1,32 @@
+.app {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #12121a;
+  color: #e0e0e8;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+}
+
+.main-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.three-container {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.bottom-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 16px;
+  background: #1a1a26;
+  border-top: 1px solid #2a2a3a;
+}
