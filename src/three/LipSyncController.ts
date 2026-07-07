@@ -6,6 +6,8 @@ export class LipSyncController {
   private analyser?: AnalyserNode
   private dataArray?: Uint8Array<ArrayBuffer>
   private smoothAmplitude = 0
+  private fakeLipSyncId?: number
+  private fakePhase = 0
 
   setVRM(vrm?: VRM) {
     this.vrm = vrm
@@ -13,6 +15,7 @@ export class LipSyncController {
 
   start(audioElement: HTMLAudioElement) {
     if (!this.vrm) return
+    this.stopFake()
 
     this.audioContext = new AudioContext()
     this.analyser = this.audioContext.createAnalyser()
@@ -26,11 +29,41 @@ export class LipSyncController {
   }
 
   stop() {
+    this.stopFake()
     this.audioContext?.close()
     this.audioContext = undefined
     this.analyser = undefined
     this.dataArray = undefined
     this.smoothAmplitude = 0
+    this.resetMouth()
+  }
+
+  // Animação de boca falsa para browser TTS (sem áudio analisável)
+  startFake() {
+    if (!this.vrm) return
+    this.fakePhase = 0
+    const tick = () => {
+      this.fakePhase += 0.09
+      const base = Math.abs(Math.sin(this.fakePhase))
+      const noise = Math.sin(this.fakePhase * 3.7) * 0.15
+      const open = Math.max(0, Math.min(1, base * 0.75 + noise))
+      const em = this.vrm?.expressionManager
+      if (em) {
+        em.setValue('aa', open * 0.85)
+        em.setValue('ih', Math.max(0, open * 0.4 - 0.2))
+        em.setValue('ou', Math.max(0, open * 0.5 - 0.3))
+        em.update()
+      }
+      this.fakeLipSyncId = requestAnimationFrame(tick)
+    }
+    this.fakeLipSyncId = requestAnimationFrame(tick)
+  }
+
+  stopFake() {
+    if (this.fakeLipSyncId !== undefined) {
+      cancelAnimationFrame(this.fakeLipSyncId)
+      this.fakeLipSyncId = undefined
+    }
     this.resetMouth()
   }
 
@@ -58,5 +91,6 @@ export class LipSyncController {
     this.vrm.expressionManager.setValue('aa', 0)
     this.vrm.expressionManager.setValue('ih', 0)
     this.vrm.expressionManager.setValue('ou', 0)
+    this.vrm.expressionManager.update()
   }
 }

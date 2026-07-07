@@ -2,11 +2,21 @@ export interface ApiConfig {
   openai_api_key: string
   anthropic_api_key: string
   elevenlabs_api_key: string
+  gemini_api_key: string
+  gemini_model: string
 
   stt_provider: string
   llm_provider: string
   tts_provider: string
   vision_provider: string
+
+  // Ollama (LLM local gratuito)
+  ollama_url: string
+  ollama_model: string
+
+  // Browser TTS
+  browser_tts_rate: number
+  browser_tts_pitch: number
 
   elevenlabs_voice_id: string
   system_prompt: string
@@ -23,16 +33,44 @@ export interface ApiConfig {
   character_gender: string
   vocabulary_style: string
   model_filename: string
+
+  // Atalhos de teclado (formato: "alt+v", "f1", "ctrl+shift+m")
+  shortcut_voice: string
+  shortcut_settings: string
+  shortcut_clear: string
+
+  // Gráficos / Performance
+  graphics_quality: 'low' | 'medium' | 'high'
+  fps_limit: number         // 0 = ilimitado, 30, 60
+  shadows_enabled: boolean
+  pixel_ratio: number       // 0.5, 0.75, 1.0, 1.5, 2.0
+  vrm_update_rate: number   // 1 = todo frame, 2 = a cada 2 frames
+
+  // HUD / Aparência
+  bg_color: string
+  bg_opacity: number
+  accent_color: string
+  text_color: string
+  hide_titlebar: boolean
+  hide_bottom_bar: boolean
+  hide_scene_controls: boolean
+  transparent_window: boolean
 }
 
 const DEFAULT_CONFIG: ApiConfig = {
   openai_api_key: '',
   anthropic_api_key: '',
   elevenlabs_api_key: '',
-  stt_provider: 'openai',
+  gemini_api_key: '',
+  gemini_model: 'gemini-3.5-flash',
+  stt_provider: 'browser',
   llm_provider: 'openai',
-  tts_provider: 'openai',
+  tts_provider: 'browser',
   vision_provider: 'openai',
+  ollama_url: 'http://localhost:11434',
+  ollama_model: 'llama3.2',
+  browser_tts_rate: 1.0,
+  browser_tts_pitch: 1.0,
   elevenlabs_voice_id: '21m00Tcm4TlvDq8ikWAM',
   system_prompt:
     'Você é uma assistente virtual que se apresenta como um personagem 3D na tela do usuário. Responda de forma natural e expressiva. Use {feliz}, {triste}, {surpreso}, {bravo} para indicar emoções.',
@@ -46,6 +84,22 @@ const DEFAULT_CONFIG: ApiConfig = {
   character_gender: 'neutro',
   vocabulary_style: 'fofo',
   model_filename: '',
+  shortcut_voice: 'alt+v',
+  shortcut_settings: 'f1',
+  shortcut_clear: 'alt+escape',
+  graphics_quality: 'high',
+  fps_limit: 0,
+  shadows_enabled: true,
+  pixel_ratio: 1.0,   // Scene3D aplica window.devicePixelRatio na inicializacao
+  vrm_update_rate: 1,
+  bg_color: '#12121a',
+  bg_opacity: 1.0,
+  accent_color: '#4488ff',
+  text_color: '#e0e0e8',
+  hide_titlebar: false,
+  hide_bottom_bar: false,
+  hide_scene_controls: false,
+  transparent_window: false,
 }
 
 class ConfigManagerClass {
@@ -72,6 +126,13 @@ class ConfigManagerClass {
       const data = localStorage.getItem('ai-vtuber-config')
       if (data) {
         const parsed = JSON.parse(data) as ApiConfig
+        // Migra modelos descontinuados
+        const DEPRECATED_MODELS: Record<string, string> = {
+          'gemini-2.0-flash-lite': 'gemini-3.5-flash',
+        }
+        if (parsed.gemini_model && DEPRECATED_MODELS[parsed.gemini_model]) {
+          parsed.gemini_model = DEPRECATED_MODELS[parsed.gemini_model]
+        }
         this.config = { ...DEFAULT_CONFIG, ...parsed }
       } else {
         const defaultData = { ...DEFAULT_CONFIG }

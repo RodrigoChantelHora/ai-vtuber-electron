@@ -42,3 +42,5 @@
 
 .tb-btn:hover { background: #2a2a3a; color: #fff; }
 .tb-close:hover { background: #cc3333; color: #fff; }
+.tb-logs { font-size: 14px; }
+.tb-logs:hover { background: #1a2a3a; }

@@ -7,17 +7,30 @@ import path from 'path'
 export default defineConfig({
   plugins: [
     react(),
-    electron({
-      entry: 'electron/main.ts',
-      vite: {
-        build: {
-          outDir: 'dist-electron',
-          rollupOptions: {
-            external: ['electron'],
+    electron([
+      {
+        entry: 'electron/main.ts',
+        vite: {
+          build: {
+            outDir: 'dist-electron',
+            rollupOptions: { external: ['electron'] },
           },
         },
       },
-    }),
+      {
+        entry: 'electron/preload.ts',
+        onstart(options) {
+          // Recarrega o renderer quando o preload muda, sem reiniciar o Electron inteiro
+          options.reload()
+        },
+        vite: {
+          build: {
+            outDir: 'dist-electron',
+            rollupOptions: { external: ['electron'] },
+          },
+        },
+      },
+    ]),
     renderer(),
   ],
   resolve: {

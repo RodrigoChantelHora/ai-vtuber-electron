@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, desktopCapturer, dialog } from 'electron'
+import { app, BrowserWindow, ipcMain, desktopCapturer, dialog, Notification } from 'electron'
 import path from 'path'
 import fs from 'fs'
 
@@ -11,7 +11,7 @@ function createWindow() {
     minWidth: 900,
     minHeight: 600,
     frame: false,
-    transparent: false,
+    transparent: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -68,8 +68,15 @@ ipcMain.handle('capture-screen', async () => {
   return pngBuffer.toString('base64')
 })
 
-ipcMain.handle('import-vrm', async () => {
-  const result = await dialog.showOpenDialog(mainWindow!, {
+ipcMain.handle('import-vrm', async (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender) ?? mainWindow
+  if (win) {
+    win.focus()
+    // Garante que a janela principal está na frente antes de abrir o diálogo
+    if (!win.isFocused()) win.show()
+  }
+
+  const result = await dialog.showOpenDialog(win ?? mainWindow!, {
     title: 'Selecionar modelo VRM',
     filters: [
       { name: 'Modelo VRM', extensions: ['vrm'] },
@@ -89,6 +96,37 @@ ipcMain.handle('import-vrm', async () => {
   try {
     copyFile(srcPath, destPath)
     return { success: true, fileName, filePath: destPath, data: readFileB64(destPath) }
+  } catch (err: any) {
+    return { success: false, error: err.message }
+  }
+})
+
+ipcMain.handle('import-vrm-from-path', async (_event, srcPath: string) => {
+  if (!srcPath || !srcPath.endsWith('.vrm')) {
+    return { success: false, error: 'Arquivo deve ser .vrm' }
+  }
+  if (!fileExists(srcPath)) {
+    return { success: false, error: 'Arquivo não encontrado' }
+  }
+  const fileName = path.basename(srcPath)
+  const destPath = path.join(modelsDir(), fileName)
+  try {
+    copyFile(srcPath, destPath)
+    return { success: true, fileName, filePath: destPath, data: readFileB64(destPath) }
+  } catch (err: any) {
+    return { success: false, error: err.message }
+  }
+})
+
+ipcMain.handle('import-vrm-data', async (_event, fileName: string, base64: string) => {
+  if (!fileName || !fileName.endsWith('.vrm')) {
+    return { success: false, error: 'Arquivo deve ser .vrm' }
+  }
+  const destPath = path.join(modelsDir(), fileName)
+  try {
+    const buffer = Buffer.from(base64, 'base64')
+    fs.writeFileSync(destPath, buffer)
+    return { success: true, fileName, filePath: destPath, data: base64 }
   } catch (err: any) {
     return { success: false, error: err.message }
   }
@@ -127,6 +165,29 @@ ipcMain.handle('maximize-window', () => {
 
 ipcMain.handle('close-window', () => {
   mainWindow?.close()
+})
+
+
+// ===== Logs =====
+
+function logFilePath(): string {
+  return path.join(app.getPath('userData'), 'app.log')
+}
+
+ipcMain.handle('append-log', (_event, line: string) => {
+  try { fs.appendFileSync(logFilePath(), line + '\n', 'utf-8') } catch { /* silencioso */ }
+})
+
+ipcMain.handle('get-log-path', () => logFilePath())
+
+ipcMain.handle('show-notification', (_event, title: string, body: string) => {
+  if (Notification.isSupported()) {
+    new Notification({ title, body, silent: false }).show()
+  }
+})
+
+ipcMain.handle('clear-log-file', () => {
+  try { fs.writeFileSync(logFilePath(), '', 'utf-8') } catch { /* silencioso */ }
 })
 
 app.whenReady().then(createWindow)
